@@ -1,4 +1,3 @@
-local colors = require("colors")
 local component = require("component")
 local term = require("term")
 local filesystem = require("filesystem")
@@ -285,7 +284,7 @@ function drawIris(state)
   end
 end
 
--- Draws the address stargate being controlled
+-- Draws the address stargate being controlled 
 function drawLocalAddress() 
   x,y = gpu.getResolution()
   gpu.setBackground(colorBlack)
@@ -369,10 +368,7 @@ function drawSecurityPageTop()
     else
       gpu.setBackground(colorLightGray)
     end
-    for xc = 1,x do
-      term.setCursor(xc, yc)
-      term.write(" ")
-    end
+    gpu.fill(1, yc, x, 1, " ")
     term.setCursor(x/2-4, yc)
     term.write("Add Address")
   end
@@ -454,29 +450,20 @@ function drawHome()
   drawTerm()
 end
 
--- Draws the Dial screen
+-- Draws the Address (Dial) screen
 function drawBookmarksPage()
   gpu.setBackground(colorBlack)
   term.clear()
   gpu.setForeground(colorBlack)
   x,y = gpu.getResolution()
-  for yc = 1,y-3 do
-    if yc%2 == 1 then
+  for i = 1,y-3 do
+    if i%2 == 1 then
       gpu.setBackground(colorLightBlue)
     else
       gpu.setBackground(colorLightGray)
     end
-    for xc = 1,x do
-      term.setCursor(xc, yc)
-      term.write(" ")
-    end
-  end
-  for i= 1,y do
-      if i%2 == 1 then
-      gpu.setBackground(colorLightBlue)
-    else
-      gpu.setBackground(colorLightGray)
-    end
+    gpu.fill(1, i, x, 1, " ")
+
     if filesystem.exists(gatesDir..tostring(i)) then
       file = filesystem.open(gatesDir..tostring(i),"r")
       bookmark = serialization.unserialize(file:read(1024))
@@ -497,6 +484,7 @@ function drawBookmarksPage()
       term.write("Add Address")
     end
   end
+
   term.setCursor(x/2, y-1)
   gpu.setBackground(colorBlack)
   gpu.setForeground(colorWhite)
@@ -605,19 +593,17 @@ function drawHistoryPage()
   term.clear()
   gpu.setForeground(colorBlack)
   x,y = gpu.getResolution()
-  for yc = 1,y-3 do
-    if yc%2 == 1 then
+  for i = 1,y-3 do
+    if i%2 == 1 then
       gpu.setBackground(colorLightBlue)
     else
       gpu.setBackground(colorLightGray)
     end
-    for xc = 1,x do
-      term.setCursor(xc, yc)
-      term.write(" ")
-    end
+    gpu.fill(1, i, x, 1, " ")
+
   end
   if filesystem.exists(rootDir.."history") then
-    file = filesystem.open(rootDir.."history","r")
+    file = filesystem.open(rootDir.."history", "r")
     historyTable = serialization.unserialize(file:read(1024))
     file:close()
     test = serialization.serialize(historyTable)
