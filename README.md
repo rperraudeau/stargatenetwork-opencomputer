@@ -1,4 +1,4 @@
-# Stargate-Network on OpenComputer
+# Stargate-Network on OpenComputer v0.1b
 
 This program was created to use Stargate-Network with OpenComputer systems.
 

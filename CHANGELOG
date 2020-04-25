@@ -1,0 +1,42 @@
+v1.0b
+
+- Porting From ComputerCraft to OpenComputer
+- Move main files to a new "/home/stargate" directory and "/home/stargate/gates" for adresses
+- Added Ctrl+c listener to close program
+- Added configuration checking
+- Added Blue layer on Main screen Gate when opened
+- Added first check for added address requirement (non empty name + address should have at least 7 chars) to prevent program crash
+- Minor modifications of the interface
+
+---
+
+TODO
+  FEATURES PLANNED
+    Add more pages for addresses
+    Add better checking for inputs (forbidden chars E.g.) + Error messages when unvalid
+    Add cancel button on adress input interface - when miss clicked on "Add address" E.g.
+    Add filter on string to auto-remove Hyphons when necessary
+    Add a Quit button
+    Edit existing Addresses
+    Reorder existing Addresses
+    Visual Iris on Main interface
+    Draw actual chevron status sign on the right of the Main screen
+    Look at StargateNetwork API to check if it is possible to differentiate chevron engaged/locked - or do it manually if possible
+    Configration Interface
+      Keep Full Hystory / Keep only 15 last History Entires only
+    Credits Interface with links
+    Standalone Program for iris control (like a fingerprint scanner)
+    Check if pictures can be added in OC for a better design - low priority-, if so:
+      Add SGC Logo - if I can find an open-source one
+      Add Chevrons Logo
+      Add Better Gate interface
+    Add language files - very low priority-
+
+  KNOWN ISSUES
+    Trouble with Hystory interface when too big
+
+  CHECK
+    Allow/Ban buttons
+    Defence Interface
+    Interface optimisation (Dial interface is quite long to be displayed E.g.)
+    Tier components requirements (screen/cpu/gpu/memory ...)
