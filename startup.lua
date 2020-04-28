@@ -460,17 +460,25 @@ function drawBookmarksPage()
       file = io.open(gatesDir..tostring(i),"r")
       bookmark = serialization.unserialize(file:read("*a"))
       file:close()
-      term.setCursor(1,i)
-      for k,v in pairs(bookmark) do
-        if k == "name" then
-          term.write(v)
-          term.setCursor(x/2, i)
-          term.write(bookmark.address)
-          term.setCursor(x,i)
-          gpu.setBackground(colorRed)
-          term.write("X")
-        end
+      term.setCursor(1, i)
+      term.write(bookmark.name)
+      term.setCursor(x/2-4, i)
+      term.write(showAddress(bookmark.address))
+      
+      -- up
+      if i > 1 then
+        term.setCursor(((x/4)*3)-1, i)
+        term.write(utf8.char(9650))
       end
+      -- down
+      if i < y-3 then
+        term.setCursor(((x/4)*3)+1, i)
+        term.write(utf8.char(9660))
+      end
+      
+      term.setCursor(x,i)
+      gpu.setBackground(colorRed)
+      term.write("X")
     elseif i < y-2 then
       term.setCursor(1, i)
       term.write("Add Address")
@@ -826,6 +834,29 @@ while true do
                 os.sleep(2)
               end
 
+            -- click move top
+            elseif param2 >= ((x/4)*3)-1 and param2 <= (x/4)*3 then
+              if param3 > 1 then
+                if filesystem.exists(gatesDir..tostring(math.floor(param3-1))) then
+                  filesystem.rename(gatesDir..tostring(math.floor(param3)), gatesDir.."tmp")
+                  filesystem.rename(gatesDir..tostring(math.floor(param3-1)), gatesDir..tostring(math.floor(param3)))
+                  filesystem.rename(gatesDir.."tmp", gatesDir..tostring(math.floor(param3-1)))
+                else
+                  filesystem.rename(gatesDir..tostring(math.floor(param3)), gatesDir..tostring(math.floor(param3-1)))
+                end
+              end
+            -- click move bottom
+            elseif param2 >= ((x/4)*3)+1 and param2 <= ((x/4)*3)+2 then
+              if param3 < y-3 then
+                if filesystem.exists(gatesDir..tostring(math.floor(param3+1))) then
+                  filesystem.rename(gatesDir..tostring(math.floor(param3)), gatesDir.."tmp")
+                  filesystem.rename(gatesDir..tostring(math.floor(param3+1)), gatesDir..tostring(math.floor(param3)))
+                  filesystem.rename(gatesDir.."tmp", gatesDir..tostring(math.floor(param3+1)))
+                else
+                  filesystem.rename(gatesDir..tostring(math.floor(param3)), gatesDir..tostring(math.floor(param3+1)))
+                end
+              end
+              
             -- user has clicked on a bookmark
             else
               -- Dial existing gate
