@@ -380,8 +380,8 @@ function drawSecurityPageTop()
         term.write(v.name)
         term.setCursor(x/2-4, k)
         term.write("           ")
-        term.setCursor(x/2 - string.len(v.address)/2 +1, k)
-        term.write(v.address)
+        term.setCursor(x/2 - string.len(showAddress(v.address))/2 +1, k)
+        term.write(showAddress(v.address))
         term.setCursor(x,k)
         gpu.setBackground(colorRed)
         term.write("X")
@@ -574,7 +574,7 @@ function drawHistoryButton()
 end
 
 -- Add calls to History
-function addToHistory(address)
+function addToHistory(address, isIncoming)
   if filesystem.exists(rootDir.."history") then
     file = io.open(rootDir.."history", "r")
     history = serialization.unserialize(file:read("*a"))
@@ -591,8 +591,8 @@ function addToHistory(address)
     print("")
     print("couldn't serialize")
   end
-  test = serialization.serialize(historyTable)
-  table.insert(history, 1, address)
+  local recAddress = filterAddress(address)
+  table.insert(history, 1, { address=recAddress, incoming=isIncoming, date="Day "..math.ceil(os.time()/3600/24).." "..os.date("%I:%M") } )
   file = filesystem.open(rootDir.."history", "w")
   file:write(serialization.serialize(history))
   file:close()
@@ -604,6 +604,16 @@ function drawHistoryPage()
   term.clear()
   gpu.setForeground(colorBlack)
   x,y = gpu.getResolution()
+
+  -- Get Bookmark Addresses to find existing gates name
+  local bookmarkAddresses = {}
+  for filename in filesystem.list(gatesDir) do
+    file = io.open(gatesDir..filename,"r")
+    bookmark = serialization.unserialize(file:read("*a"))
+    file:close()
+    bookmarkAddresses[bookmark.address] = bookmark.name
+  end
+  
   for i = 1,y-3 do
     if i%2 == 1 then
       gpu.setBackground(colorLightBlue)
@@ -611,7 +621,6 @@ function drawHistoryPage()
       gpu.setBackground(colorLightGray)
     end
     gpu.fill(1, i, x, 1, " ")
-
   end
   if filesystem.exists(rootDir.."history") then
     file = io.open(rootDir.."history", "r")
@@ -619,27 +628,62 @@ function drawHistoryPage()
     file:close()
     test = serialization.serialize(historyTable)
     if string.len(test) > 7 then
-      for k,v in pairs(historyTable) do
-        if k%2 == 1 then
-          gpu.setBackground(colorLightBlue)
-        else
-          gpu.setBackground(colorLightGray)
+      for k,history in pairs(historyTable) do
+        if k <= y-3 then
+          if k%2 == 1 then
+            gpu.setBackground(colorLightBlue)
+          else
+            gpu.setBackground(colorLightGray)
+          end
+          
+          -- Col 1 : Address
+          term.setCursor(1,k)
+          term.write(showAddress(history.address))
+          
+          -- Col 2 : Gate Name
+          term.setCursor(20, k)
+          if bookmarkAddresses[history.address] ~= nil then
+            term.write(bookmarkAddresses[history.address])
+          else
+            gpu.setForeground(colorRed)
+            term.write("UNKNOW")
+            gpu.setForeground(colorBlack)
+          end
+          
+          -- Col 3 : Date
+          term.setCursor((x/8)*3, k)
+          term.write(history.date)
+          
+          -- Col 4 : Type
+          term.setCursor((x/8)*4, k)
+          if history.incoming == true then
+            gpu.setForeground(colorRed)
+            term.write("INCOMING")
+          else
+            gpu.setForeground(colorGreen)
+            term.write("CALLED")
+          end
+          gpu.setForeground(colorBlack)
+          
+          -- Col 5 : Save Button
+          if bookmarkAddresses[history.address] == nil then
+            term.setCursor((x/8)*5, k)
+            gpu.setBackground(colorBlue)
+            gpu.setForeground(colorWhite)
+            term.write("SAVE")
+          end
+          
+          -- Col 6 : Ban/Allow address
+          term.setCursor(x-8, k)
+          gpu.setBackground(colorRed)
+          gpu.setForeground(colorBlack)
+          term.write("BAN/ALLOW")
+          clickLimit = k
         end
-        term.setCursor(1,k)
-        term.write(v)
-        term.setCursor(x/2+7, k)
-        gpu.setBackground(colorBlue)
-        gpu.setForeground(colorWhite)
-        term.write("SAVE")
-        term.setCursor(x-8, k)
-        gpu.setBackground(colorRed)
-        gpu.setForeground(colorBlack)
-        term.write("BAN/ALLOW")
-        clickLimit = k
       end
     end
     test = {}
-  end 
+  end
   gpu.setBackground(colorBlack)
   for yc = y-2, y do
     for xc = 1,x do
@@ -653,19 +697,22 @@ function drawHistoryPage()
 end
 
 -- Draws History input page
-function historyInputPage(address)
+function historyInputPage(address, name)
   cx, cy = term.getCursor()
   term.clear()
   gpu.setBackground(colorBlack)
   x,y = gpu.getResolution()
-  term.setCursor(x/2-8, y/2-2)
-  print("Set an address name")
-  term.setCursor(x/2 - 4, y/2)
-  print("         ")
-  term.setCursor(x/2 - 4, y/2)
-  nameInput = io.read()
+  
+  if name == nil then
+    term.setCursor(x/2-8, y/2-2)
+    print("Set an address name")
+    term.setCursor(x/2 - 4, y/2)
+    print("         ")
+    term.setCursor(x/2 - 4, y/2)
+    name = io.read()
+  end
   addressInput = "nil"
-  newGate = {name = nameInput, address = address}
+  newGate = {name = name, address = filterAddress(address)}
   term.clear()
   term.setCursor(1,1)
   return newGate
@@ -883,7 +930,7 @@ while true do
                       status, int = stargate.stargateState()
                       drawSgStatus(status)
                       address = v
-                      addToHistory(v)
+                      addToHistory(v, false)
                     else
                       drawSgStatus("Error")
                     end
@@ -909,20 +956,24 @@ while true do
         end
       end
 
-    -- Click has opened history menu
-    elseif param2 > x-7 and param2 < x-4 and param3 >= y/3+5 and param3 <= y/3*1.5+5 then 
+    -- Open history menu
+    elseif param2 > x-7 and param2 < x-4 and param3 >= y/3+5 and param3 <= y/3*1.5+5 then
+      
+      local bookmarkAddresses = {}
+      for filename in filesystem.list(gatesDir) do
+        file = io.open(gatesDir..filename,"r")
+        bookmark = serialization.unserialize(file:read("*a"))
+        file:close()
+        bookmarkAddresses[bookmark.address] = bookmark.name
+      end
+      
       while true do
         drawHistoryPage()
         eventName, param1, param2, param3 = event.pullFiltered(eventFilter)
         if eventName == "touch" then
-
-          -- user clicked back
-          if param3 >= y-2 then 
-            drawHome()
-            break
-
+        
           -- user has clicked save
-          elseif param2 >= x/2+7 and param2 <= x/2+10 and param3 <= clickLimit then 
+          if param2 >= (x/8)*5 and param2 <= ((x/8)*5) + 4 and param3 <= clickLimit and bookmarkAddresses[history[param3].address] == nil then
             if filesystem.exists(rootDir.."history") then
               file = io.open(rootDir.."history", "r")
               history = serialization.unserialize(file:read("*a"))
@@ -930,7 +981,7 @@ while true do
               for i = 1,y do
                 if filesystem.exists(gatesDir..tostring(i)) == false then
                   file = filesystem.open(gatesDir..tostring(i), "w")
-                  file:write(serialization.serialize(historyInputPage(history[param3])))
+                  file:write(serialization.serialize(historyInputPage(history[param3].address)))
                   file:close()
                   break
                 end
@@ -945,15 +996,15 @@ while true do
               file:close()
               if filesystem.exists(rootDir.."secList") == false then
                 secList = {}
-                table.insert(secList, 1, historyInputPage(history[param3]))
-                file = filesystem.open(rootDir.."secList", "w")
-                file:write(serialization.serialize(secList))
-                file:close()
               else
                 file = io.open(rootDir.."secList", "r")
                 secList = serialization.unserialize(file:read("*a"))
                 file:close()
-                table.insert(secList, 1, historyInputPage(history[param3]))
+              end
+
+              local historyInputs = historyInputPage(history[param3].address, bookmarkAddresses[history[param3].address])
+              if historyInputs ~= nil then
+                table.insert(secList, 1, historyInputs)
                 file = filesystem.open(rootDir.."secList", "w")
                 file:write(serialization.serialize(secList))
                 file:close()
@@ -1006,7 +1057,7 @@ while true do
       drawIris(false)
       gateSec = false
     end
-    addToHistory(param2)
+    addToHistory(param2, true)
 
   elseif eventName == "sgMessageReceived" then
     if param2 == "Open" then
