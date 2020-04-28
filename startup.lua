@@ -145,33 +145,16 @@ function drawChevrons()
   -- Right
   gpu.fill(chevX2-1, chevY1+1, 2, chevY2-chevY1, " ")
 
-  chev1pos = {chevX1, chevY2 }
-  gpu.setBackground(colorGray)
-  gpu.setForeground(colorBlack)
-  term.setCursor(math.floor(chev1pos[1]), math.floor(chev1pos[2])-1)
-  term.write(" > ")
-  chev2pos = {chevX1, chevY1 + ((chevY2 - chevY1) / 2) }
-  term.setCursor(math.floor(chev2pos[1]-1), math.floor(chev2pos[2]))
-  term.write(" > ")
-  chev3pos = {chevX1, chevY1 }
-  term.setCursor(math.floor(chev3pos[1]), math.floor(chev3pos[2]+1))
-  term.write(" > ")
-  chev4pos = {chevX1 + ((chevX2 - chevX1) / 2), chevY1 }
-  term.setCursor(math.floor(chev4pos[1]-1), math.floor(chev4pos[2]))
-  term.write(" V ")
-  chev5pos = {chevX2, chevY1 }
-  term.setCursor(math.floor(chev5pos[1]-2), math.floor(chev5pos[2])+1)
-  term.write(" < ")
-  chev6pos = {chevX2, chevY1 + ((chevY2 - chevY1) / 2) }
-  term.setCursor(math.floor(chev6pos[1]-1), math.floor(chev6pos[2]))
-  term.write(" < ")
-  chev7pos = {chevX2, chevY2 }
-  term.setCursor(math.floor(chev7pos[1]-2), math.floor(chev7pos[2]-1))
-  term.write(" < ")
-  chev8pos = {chevX1 + ((chevX2 - chevX1) /2), chevY2 }
-  term.setCursor(math.floor(chev8pos[1]-1), math.floor(chev8pos[2]))
-  term.write("   ")
-  gpu.setBackground(colorBlack)
+  chevColors = {colorGray, colorBlack}
+  drawChev({1, ">"}, chevColors)
+  drawChev({2, ">"}, chevColors)
+  drawChev({3, ">"}, chevColors)
+  drawChev({4, "V"}, chevColors)
+  drawChev({5, "<"}, chevColors)
+  drawChev({6, "<"}, chevColors)
+  drawChev({7, "<"}, chevColors)
+  drawChev({8, " "}, chevColors)
+
   if state == "Connected" then
     gpu.setForeground(colorLightBlue)
   end
@@ -180,49 +163,54 @@ function drawChevrons()
 end
 
 -- Draws single chevron on screen for updating
-function drawChev( chevInfo )
-  gpu.setBackground(colorOrange)
+function drawChev( chevInfo, chevColors )
+  chevColors = chevColors or {colorOrange, colorGray}
+
+  gpu.setBackground(chevColors[1])
+  gpu.setForeground(chevColors[2])
+  
   x,y = gpu.getResolution()
   chevX1 = x/3
-  chevX2 = x/3*2+1
+  chevX2 = x/3*2 + 2
   chevY1 = y/3-2
-  chevY2 = y/3*2 +2
+  chevY2 = y/3*2 + 2
+  
   if chevInfo[1] == 1 then
     chev1pos = {chevX1, chevY2 }
     term.setCursor(math.floor(chev1pos[1]), math.floor(chev1pos[2])-1)
-    term.write(" "..chevInfo[2].." ")
+    term.write("  "..chevInfo[2].."  ")
   elseif chevInfo[1] == 2 then
     chev2pos = {chevX1, chevY1 + ((chevY2 - chevY1) / 2) }
-    term.setCursor(math.floor(chev2pos[1]-1), math.floor(chev2pos[2]))
-    term.write(" "..chevInfo[2].." ")
+    term.setCursor(math.floor(chev2pos[1]-2), math.floor(chev2pos[2]))
+    term.write("  "..chevInfo[2].."  ")
   elseif chevInfo[1] == 3 then
     chev3pos = {chevX1, chevY1 }
     term.setCursor(math.floor(chev3pos[1]), math.floor(chev3pos[2]+1))
-    term.write(" "..chevInfo[2].." ")
+    term.write("  "..chevInfo[2].."  ")
   elseif chevInfo[1] == 4 then
     chev4pos = {chevX1 + ((chevX2 - chevX1) / 2), chevY1 }
-    term.setCursor(math.floor(chev4pos[1]-1), math.floor(chev4pos[2]))
-    term.write(" "..chevInfo[2].." ")
+    term.setCursor(math.floor(chev4pos[1]-3), math.floor(chev4pos[2]))
+    term.write("  "..chevInfo[2].."  ")
   elseif chevInfo[1] == 5 then
     chev5pos = {chevX2, chevY1 }
-    term.setCursor(math.floor(chev5pos[1]-2), math.floor(chev5pos[2])+1)
-    term.write(" "..chevInfo[2].." ")
+    term.setCursor(math.floor(chev5pos[1]-4), math.floor(chev5pos[2])+1)
+    term.write("  "..chevInfo[2].."  ")
   elseif chevInfo[1] == 6 then
     chev6pos = {chevX2, chevY1 + ((chevY2 - chevY1) / 2) }
-    term.setCursor(math.floor(chev6pos[1]-1), math.floor(chev6pos[2]))
-    term.write(" "..chevInfo[2].." ")
+    term.setCursor(math.floor(chev6pos[1]-2), math.floor(chev6pos[2]))
+    term.write("  "..chevInfo[2].."  ")
   elseif chevInfo[1] == 7 then
     chev7pos = {chevX2, chevY2 }
-    term.setCursor(math.floor(chev7pos[1]-2), math.floor(chev7pos[2]-1))
-    term.write(" "..chevInfo[2].." ")
+    term.setCursor(math.floor(chev7pos[1]-4), math.floor(chev7pos[2]-1))
+    term.write("  "..chevInfo[2].."  ")
   elseif chevInfo[1] == 8 then
     chev8pos = {chevX1 + ((chevX2 - chevX1) /2), chevY2 }
-    term.setCursor(math.floor(chev8pos[1]-1), math.floor(chev8pos[2]))
-    term.write(" "..chevInfo[2].." ")
+    term.setCursor(math.floor(chev8pos[1]-2), math.floor(chev8pos[2]))
+    term.write("  "..chevInfo[2].."  ")
   elseif chevInfo[1] == 9 then
     chev9pos = {chevX1 + ((chevX2 - chevX1) /2), chevY2 }
     term.setCursor(math.floor(chev8pos[1]-1), chevY1 + ((chevY2 - chevY1) / 2))
-    term.write(" "..chevInfo[2].." ")
+    term.write("  "..chevInfo[2].."  ")
   gpu.setBackground(colorBlack)
   end
 end
