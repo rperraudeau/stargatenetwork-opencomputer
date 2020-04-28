@@ -118,35 +118,18 @@ function drawChevrons()
   else
     gpu.setBackground(colorBlack)
   end
-  for yc = chevY1+1, chevY2 do
-    for xc = chevX1+2, chevX2-1 do
-      term.setCursor(xc, yc)
-      term.write(" ")
-    end
-  end
+  gpu.fill(chevX1+2, chevY1+1, chevX2-chevX1-3, chevY2-chevY1, " ")
 
   -- Draw Gate
   gpu.setBackground(colorLightGray)
   -- Top
-  for i = chevX1+2, chevX2-2 do
-    term.setCursor(i,chevY1)
-    term.write(" ")
-  end
+  gpu.fill(chevX1+2, chevY1, chevX2-chevX1-3, 1, " ")
   -- Bottom
-  for i = chevX1+2, chevX2-2 do
-    term.setCursor(i,chevY2)
-    term.write(" ")
-  end
+  gpu.fill(chevX1+2, chevY2, chevX2-chevX1-3, 1, " ")
   -- Left
-  for i = chevY1+2, chevY2-1 do
-    term.setCursor(chevX1,i)
-    term.write("  ")
-  end
+  gpu.fill(chevX1, chevY1+1, 2, chevY2-chevY1, " ")
   -- Right
-  for i = chevY1+1, chevY2-1 do
-    term.setCursor(chevX2-1, i)
-    term.write("  ")
-  end
+  gpu.fill(chevX2-1, chevY1+1, 2, chevY2-chevY1, " ")
 
   chev1pos = {chevX1, chevY2 }
   gpu.setBackground(colorGray)
