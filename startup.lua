@@ -500,34 +500,45 @@ function drawRemoteIris()
 end
 
 -- Add new address inputs Screen
--- TODO: add cancel button + add "wrong value for name/address"
-function inputPage(type)
-  nameInput = ""
+-- TODO: add cancel button
+function inputPage(editBookmark)
+  local nameInput = ""
+  local try = 0
   while string.len(nameInput) < 1 do
     term.clear()
     x,y = gpu.getResolution()
     term.setCursor(x/2-8, y/2-2)
-    print("Set an address name")
-    term.setCursor(x/2 - 4, y/2)
-    print("         ")
-    term.setCursor(x/2 - 4, y/2)
+    term.write("Set an address name")
+    if try > 0 then
+      term.setCursor(x/2-8, y/2-1)
+      gpu.setForeground(colorRed)
+      term.write("Name can't be empty")
+      gpu.setForeground(colorWhite)
+    end
+    term.setCursor(x/2 - 6, y/2)
+    term.write("           ")
+    term.setCursor(x/2 - 6, y/2)
     nameInput = io.read()
+    try = try+1
   end
 
-  addressInput = ""
+  local addressInput = ""
+  try = 0
   while string.len(addressInput) < 7 do
     term.clear()
-    term.setCursor(x/2-9, y/2-4)
-    print("Enter Stargate address for '"..nameInput.."'")
-    if type == "secEntry" then
-      term.setCursor(x/2-10, y/2-2)
-      print("DO NOT ENTER ANY HYPHONS")
+    term.setCursor(x/2-15, y/2-4)
+    term.write("Enter Stargate address for '"..nameInput.."'")
+    if try > 0 then
+      term.setCursor(x/2-25, y/2-3)
+      gpu.setForeground(colorRed)
+      term.write("Address should contain at least 7 alphanumeric chars")
+      gpu.setForeground(colorWhite)
     end
-    gpu.setBackground(colorBlack)
-    term.setCursor(x/2 - 5, y/2)
-    print("           ")
-    term.setCursor(x/2 - 5, y/2)
-    addressInput = string.upper(io.read())
+    term.setCursor(x/2 - 6, y/2)
+    term.write("           ")
+    term.setCursor(x/2 - 6, y/2)
+    addressInput = filterAddress(string.upper(io.read()))
+    try = try+1
   end
 
   newGate = {name = nameInput, address = addressInput}
@@ -883,10 +894,12 @@ while true do
 
               -- Create Gate data
               else
-                file = filesystem.open(gatesDir..tostring(math.floor(param3)), "w")
                 values = inputPage()
-                file:write(serialization.serialize(values))
-                file:close()
+                if values.name:len() > 0 and values.address:len() >= 7 and serialization.serialize(values) ~= false then
+                  file = filesystem.open(gatesDir..tostring(math.floor(param3)), "w")
+                  file:write(serialization.serialize(values))
+                  file:close()
+                end
               end
             end
           else
