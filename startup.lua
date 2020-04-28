@@ -64,14 +64,14 @@ term.clear()
 gpu.setBackground(colorBlack)
 dialling = {}
 
-local function alarmSet(set)
+function alarmSet(set)
   if redstone then
     redstone.setOutput("left", set)
   end
   return
 end
 
-local function eventFilter(name, ...)
+function eventFilter(name, ...)
   if name == "touch" or name == "sgStargateStateChange" or name == "sgChevronEngaged" or name == "sgMessageReceived" or name == "sgDialIn" or name == "interrupted" then
     return true
   end
@@ -221,7 +221,6 @@ function drawSgStatus(status)
     term.setCursor(1,2)
     gpu.setBackground(colorBlack)
     gpu.setForeground(colorBlack)
-    term.write(status) --needed for string length because string.len() won't work with stargateStatus()
     xc, yc = term.getCursor()
     --term.clear()
     term.setCursor(1,2)
@@ -243,30 +242,41 @@ end
 
 -- Draws button to control the Iris
 function drawIris(state) 
-  gpu.setBackground(colorLightGray)
-  ok, result = pcall(stargate.openIris)
-  if ok == false then
-    gpu.setForeground(colorBlack)
-  elseif state == true then
-    stargate.closeIris()
-    gpu.setForeground(colorLime)
-  else
-    gpu.setForeground(colorBlack)
-    stargate.openIris()
-  end
-  s = "   IRIS   "
-  i = 1
-  for  yc = y/3+5, y/3*1.5 + 5 do
-    char = string.sub(s, i, i)
-    term.setCursor(6, yc)
-    term.write(" "..char.." ")
-    i = i+1
-  end
+  x,y = gpu.getResolution()
+  gateX1 = 10
+  gateX2 = 30
+  gateY1 = y-15
+  gateY2 = y-5
+
+  -- Draw Iris Button
   if state == true then
     gpu.setForeground(colorLime)
   else
     gpu.setForeground(colorBlack)
   end
+  gpu.setBackground(colorLightGray)
+  term.setCursor(gateX2-gateX1-4, gateY1-2)
+  term.write("  IRIS  ")
+  
+  -- Draw Iris Gate
+  gpu.setBackground(colorLightGray)
+  -- Top
+  gpu.fill(gateX1+2, gateY1, gateX2-gateX1-3, 1, " ")
+  -- Bottom
+  gpu.fill(gateX1+2, gateY2, gateX2-gateX1-3, 1, " ")
+  -- Left
+  gpu.fill(gateX1, gateY1+1, 2, gateY2-gateY1-1, " ")
+  -- Right
+  gpu.fill(gateX2-1, gateY1+1, 2, gateY2-gateY1-1, " ")
+  
+  -- Draw Iris State
+  if state == false then
+    gpu.setBackground(colorBlack)
+  else
+    gpu.setBackground(colorGray)
+  end
+  gpu.fill(gateX1+2, gateY1+1, gateX2-gateX1-3, gateY2-gateY1-1, " ")
+
 end
 
 -- Draws the address stargate being controlled 
@@ -277,7 +287,7 @@ function drawLocalAddress()
   term.setCursor(x/2-7, 1)
   term.write("Stargate Address:")
   term.setCursor(x/2-3, 2)
-  term.write(stargate.localAddress())
+  term.write(showAddress(stargate.localAddress()))
 end
 
 -- Draws the button to access the dialing menu
@@ -324,12 +334,7 @@ end
 function securityButton() 
   x,y = gpu.getResolution()
   gpu.setBackground(colorLightGray)
-  sOK, result = pcall(stargate.openIris)
-  if sOK == false then
-    gpu.setForeground(colorBlack)
-  else
-    gpu.setForeground(colorBlack)
-  end
+  gpu.setForeground(colorBlack)
   s = " DEFENCE "
   i = 1
   for  yc = y/3+5, y/3*1.5 +5 do
@@ -699,6 +704,13 @@ else
 end
 drawHome()
 
+irisGateX1 = 10
+irisGateX2 = 30
+irisGateY1 = y-15
+irisGateY2 = y-5
+
+x,y = gpu.getResolution()
+
 -- Global Events
 while true do
   local eventName, param1, param2, param3 = event.pullFiltered(eventFilter)
@@ -714,10 +726,8 @@ while true do
 
   -- Click envents
   elseif eventName == "touch" then
-    x,y = gpu.getResolution()
-
     --opens or closes the Iris
-    if param2 >= 6 and param2 <= 8 and param3 >= y/3+5 and param3 <= y/3*1.5+5 then 
+    if param2 >= irisGateX2-irisGateX1-4 and param2 <= irisGateX2-irisGateX1+4 and param3 == irisGateY1-2 then 
       if stargate.irisState() == "Closed" then
         ok, result = pcall(stargate.openIris)
         if ok then
