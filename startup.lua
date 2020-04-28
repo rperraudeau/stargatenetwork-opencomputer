@@ -1,6 +1,8 @@
 local component = require("component")
 local term = require("term")
 local filesystem = require("filesystem")
+local io = require("io")
+local os = require("os")
 local event = require("event")
 local serialization = require("serialization")
 
@@ -363,8 +365,8 @@ function drawSecurityPageTop()
     term.write("Add Address")
   end
   if filesystem.exists(rootDir.."secList") then
-    file = filesystem.open(rootDir.."secList","r")
-    secInfo = serialization.unserialize(file:read(1024))
+    file = io.open(rootDir.."secList","r")
+    secInfo = serialization.unserialize(file:read("*a"))
     file:close()
     if string.len(serialization.serialize(secInfo)) > 7 then
     for k,v in pairs(secInfo) do
@@ -455,8 +457,8 @@ function drawBookmarksPage()
     gpu.fill(1, i, x, 1, " ")
 
     if filesystem.exists(gatesDir..tostring(i)) then
-      file = filesystem.open(gatesDir..tostring(i),"r")
-      bookmark = serialization.unserialize(file:read(1024))
+      file = io.open(gatesDir..tostring(i),"r")
+      bookmark = serialization.unserialize(file:read("*a"))
       file:close()
       term.setCursor(1,i)
       for k,v in pairs(bookmark) do
@@ -555,8 +557,8 @@ end
 -- Add calls to History
 function addToHistory(address)
   if filesystem.exists(rootDir.."history") then
-    file = filesystem.open(rootDir.."history", "r")
-    history = serialization.unserialize(file:read(1024))
+    file = io.open(rootDir.."history", "r")
+    history = serialization.unserialize(file:read("*a"))
     file:close()
   else
     history ={}
@@ -593,8 +595,8 @@ function drawHistoryPage()
 
   end
   if filesystem.exists(rootDir.."history") then
-    file = filesystem.open(rootDir.."history", "r")
-    historyTable = serialization.unserialize(file:read(1024))
+    file = io.open(rootDir.."history", "r")
+    historyTable = serialization.unserialize(file:read("*a"))
     file:close()
     test = serialization.serialize(historyTable)
     if string.len(test) > 7 then
@@ -696,8 +698,8 @@ end
 
 -- Run Application
 if filesystem.exists(rootDir.."currentSec") then -- checks to see if there's list of gates stored for security reasons
-  file = filesystem.open(rootDir.."currentSec", "r")
-  currentSec = file:read(1024)
+  file = io.open(rootDir.."currentSec", "r")
+  currentSec = file:read("*a")
   file:close()
 else
   currentSec = "NONE"
@@ -742,61 +744,58 @@ while true do
 
     -- Open the defence menu
     elseif param2 >= 2 and param2 <= 4 and param3 >= y/3+5 and param3 <= y/3*1.5+5 then
-      sOK, result = pcall(stargate.openIris)
-      if sOK then
-        while true do
-          drawSecurityPageTop()
-          drawSecurityPageBottom(currentSec)
-          eventName, param1, param2, param3 = event.pullFiltered(eventFilter)
-          if eventName == "touch" then
-            if param3 >= y-2 then --checks if the user's touch is at the bottom of the screen with the buttons
-              if param2 >= x-8 then -- "back" button has been pushed, returns user to home menu
-                drawHome()
-                break
-              elseif param2 < x-6 then -- Click has changed the security type, cycles through "BLACKLIST", "WHITELIST", "NONE"
-                if currentSec == "BLACKLIST" then
-                  currentSec = "WHITELIST"
-                elseif currentSec == "WHITELIST" then
-                  currentSec = "NONE"        
-                elseif currentSec == "NONE" then
-                  currentSec = "BLACKLIST"
-                end
-                file = filesystem.open(rootDir.."currentSec", "w")
-                file:write(currentSec)
-                file:close()
+      while true do
+        drawSecurityPageTop()
+        drawSecurityPageBottom(currentSec)
+        eventName, param1, param2, param3 = event.pullFiltered(eventFilter)
+        if eventName == "touch" then
+          if param3 >= y-2 then --checks if the user's touch is at the bottom of the screen with the buttons
+            if param2 >= x-8 then -- "back" button has been pushed, returns user to home menu
+              drawHome()
+              break
+            elseif param2 < x-6 then -- Click has changed the security type, cycles through "BLACKLIST", "WHITELIST", "NONE"
+              if currentSec == "BLACKLIST" then
+                currentSec = "WHITELIST"
+              elseif currentSec == "WHITELIST" then
+                currentSec = "NONE"        
+              elseif currentSec == "NONE" then
+                currentSec = "BLACKLIST"
               end
-            elseif param2 > x - 3 then -- delete record
-              file = filesystem.open(rootDir.."secList", "r")
-              secList = serialization.unserialize(file:read(1024))
+              file = filesystem.open(rootDir.."currentSec", "w")
+              file:write(currentSec)
               file:close()
-              table.remove(secList, param3)
+            end
+          elseif param2 > x - 3 then -- delete record
+            file = io.open(rootDir.."secList", "r")
+            secList = serialization.unserialize(file:read("*a"))
+            file:close()
+            table.remove(secList, param3)
+            file = filesystem.open(rootDir.."secList", "w")
+            file:write(serialization.serialize(secList))
+            file:close()
+            drawSecurityPageTop()
+          elseif param3 < y - 2 then -- check if empty, if so add new entry  
+            if filesystem.exists(rootDir.."secList") == false then
+              secList = {}
+              table.insert(secList, 1, inputPage())
               file = filesystem.open(rootDir.."secList", "w")
               file:write(serialization.serialize(secList))
               file:close()
-              drawSecurityPageTop()
-            elseif param3 < y - 2 then -- check if empty, if so add new entry  
-              if filesystem.exists(rootDir.."secList") == false then
-                secList = {}
-                table.insert(secList, 1, inputPage())
-                file = filesystem.open(rootDir.."secList", "w")
-                file:write(serialization.serialize(secList))
-                file:close()
-              else
-                file = filesystem.open(rootDir.."secList", "r")
-                secList = serialization.unserialize(file:read(1024))
-                file:close()
-                table.insert(secList, 1, inputPage("secEntry"))
-                file = filesystem.open(rootDir.."secList", "w")
-                file:write(serialization.serialize(secList))
-                file:close()
-              end
-              drawSecurityPageTop()
-              drawSecurityPageBottom(currentSec)
+            else
+              file = io.open(rootDir.."secList", "r")
+              secList = serialization.unserialize(file:read("*a"))
+              file:close()
+              table.insert(secList, 1, inputPage())
+              file = filesystem.open(rootDir.."secList", "w")
+              file:write(serialization.serialize(secList))
+              file:close()
             end
-          else -- if an event that isn't a users touch happens the screen will return to the home screen (in case of incoming connection)
-            drawHome()
-            break
+            drawSecurityPageTop()
+            drawSecurityPageBottom(currentSec)
           end
+        else -- if an event that isn't a users touch happens the screen will return to the home screen (in case of incoming connection)
+          drawHome()
+          break
         end
       end
 
@@ -831,8 +830,8 @@ while true do
             else
               -- Dial existing gate
               if filesystem.exists(gatesDir..tostring(math.floor(param3))) then
-                file = filesystem.open(gatesDir..tostring(math.floor(param3)), "r")
-                gateData = serialization.unserialize(file:read(1024)) -- GATE DATA VARIABLE!!!
+                file = io.open(gatesDir..tostring(math.floor(param3)), "r")
+                gateData = serialization.unserialize(file:read("*a")) -- GATE DATA VARIABLE!!!
                 file:close()
                 drawHome()
                 for k,v in pairs(gateData) do
@@ -881,8 +880,8 @@ while true do
           -- user has clicked save
           elseif param2 >= x/2+7 and param2 <= x/2+10 and param3 <= clickLimit then 
             if filesystem.exists(rootDir.."history") then
-              file = filesystem.open(rootDir.."history", "r")
-              history = serialization.unserialize(file:read(1024))
+              file = io.open(rootDir.."history", "r")
+              history = serialization.unserialize(file:read("*a"))
               file:close()
               for i = 1,y do
                 if filesystem.exists(gatesDir..tostring(i)) == false then
@@ -897,8 +896,8 @@ while true do
           -- user click "ban/allow"
           elseif param2 >= x-9 and param3 <= clickLimit then 
             if filesystem.exists(rootDir.."history") then
-              file = filesystem.open(rootDir.."history", "r")
-              history = serialization.unserialize(file:read(1024))
+              file = io.open(rootDir.."history", "r")
+              history = serialization.unserialize(file:read("*a"))
               file:close()
               if filesystem.exists(rootDir.."secList") == false then
                 secList = {}
@@ -907,8 +906,8 @@ while true do
                 file:write(serialization.serialize(secList))
                 file:close()
               else
-                file = filesystem.open(rootDir.."secList", "r")
-                secList = serialization.unserialize(file:read(1024))
+                file = io.open(rootDir.."secList", "r")
+                secList = serialization.unserialize(file:read("*a"))
                 file:close()
                 table.insert(secList, 1, historyInputPage(history[param3]))
                 file = filesystem.open(rootDir.."secList", "w")
@@ -934,13 +933,13 @@ while true do
     drawRemoteAddress()
     alarmSet(true)
     if filesystem.exists(rootDir.."currentSec") then
-      file = filesystem.open(rootDir.."currentSec", "r")
-      currentSec = file:read(1024)
+      file = io.open(rootDir.."currentSec", "r")
+      currentSec = file:read("*a")
       file:close()
     end
     if filesystem.exists(rootDir.."secList") then
-      file = filesystem.open(rootDir.."secList", "r")
-      secList = serialization.unserialize(file:read(1024))
+      file = io.open(rootDir.."secList", "r")
+      secList = serialization.unserialize(file:read("*a"))
       for k,v in pairs(secList) do
         address = v.address
         if string.sub(v.address,1,7) == param2 or v.address == param2 then
