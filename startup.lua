@@ -78,6 +78,20 @@ local function eventFilter(name, ...)
   return false
 end
 
+-- Display address hyphons
+function showAddress(address)
+  local returnAddress = address:sub(1, 4).."-"..address:sub(5, 7)
+  if address:len() == 9 then
+    returnAddress = returnAddress.."-"..address:sub(8,9)
+  end
+  return returnAddress
+end
+
+-- Remove address special chars
+function filterAddress(address)
+  return address:gsub("%W", "")
+end
+
 -- Checks power levels and writes power bar to monitor
 function drawPowerBar() 
   x,y = gpu.getResolution()
